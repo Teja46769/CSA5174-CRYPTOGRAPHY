@@ -1,0 +1,86 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+void createKeyMatrix(char* keyword, char keyMatrix[SIZE][SIZE]) {
+    int used[26] = {0};
+    int k = 0;
+    for (int i = 0; keyword[i] != '\0'; i++) {
+        char letter = toupper(keyword[i]);
+        if (letter == 'J') letter = 'I';  // Combine 'I' and 'J'
+        if (!used[letter - 'A']) {
+            keyMatrix[k / SIZE][k % SIZE] = letter;
+            used[letter - 'A'] = 1;
+            k++;
+        }
+    }
+    for (char letter = 'A'; letter <= 'Z'; letter++) {
+        if (letter == 'J') continue;
+        if (!used[letter - 'A']) {
+            keyMatrix[k / SIZE][k % SIZE] = letter;
+            used[letter - 'A'] = 1;
+            k++;
+        }
+    }
+}
+
+void findPosition(char keyMatrix[SIZE][SIZE], char letter, int* row, int* col) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyMatrix[i][j] == letter) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+void decryptPair(char keyMatrix[SIZE][SIZE], char a, char b, char* decryptedPair) {
+    int row1, col1, row2, col2;
+    findPosition(keyMatrix, a, &row1, &col1);
+    findPosition(keyMatrix, b, &row2, &col2);
+
+    if (row1 == row2) {
+        decryptedPair[0] = keyMatrix[row1][(col1 + SIZE - 1) % SIZE];
+        decryptedPair[1] = keyMatrix[row2][(col2 + SIZE - 1) % SIZE];
+    } else if (col1 == col2) {
+        decryptedPair[0] = keyMatrix[(row1 + SIZE - 1) % SIZE][col1];
+        decryptedPair[1] = keyMatrix[(row2 + SIZE - 1) % SIZE][col2];
+    } else {
+        decryptedPair[0] = keyMatrix[row1][col2];
+        decryptedPair[1] = keyMatrix[row2][col1];
+    }
+}
+
+void decryptMessage(char* ciphertext, char* keyword) {
+    char keyMatrix[SIZE][SIZE];
+    createKeyMatrix(keyword, keyMatrix);
+
+    char decryptedText[100] = {0};
+    int len = strlen(ciphertext);
+
+    for (int i = 0; i < len; i += 2) {
+        char pair[2] = {ciphertext[i], ciphertext[i + 1]};
+        char decryptedPair[2];
+        decryptPair(keyMatrix, pair[0], pair[1], decryptedPair);
+        decryptedText[i] = decryptedPair[0];
+        decryptedText[i + 1] = decryptedPair[1];
+    }
+
+    printf("Decrypted Text: %s\n", decryptedText);
+}
+
+int main() {
+    char keyword[20];
+    char ciphertext[] = "KXJEYUREBEZWEHEWRYTUHEYFSKREHEGOYFIWTTTUOLKSYCAJPOBOTEIZONTXBYBNTGONEYCUZWRGDSONSXBOUYWRHEBAAHYUSEDQ";
+
+    printf("Enter the keyword: ");
+    scanf("%s", keyword);
+
+    decryptMessage(ciphertext, keyword);
+
+    return 0;
+}
