@@ -1,0 +1,129 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+// Playfair matrix and helper arrays
+char keyMatrix[SIZE][SIZE];
+int letterUsed[26] = {0}; // Tracks used letters to avoid duplicates in the matrix
+
+// Function to create the 5x5 matrix from the keyword
+void createKeyMatrix(char* keyword) {
+    int i, j, k = 0;
+    int keywordLength = strlen(keyword);
+
+    // Insert keyword letters into the matrix
+    for (i = 0; i < keywordLength; i++) {
+        char letter = toupper(keyword[i]);
+        if (letter == 'J') letter = 'I'; // Treat 'I' and 'J' as the same
+        if (!letterUsed[letter - 'A']) {
+            keyMatrix[k / SIZE][k % SIZE] = letter;
+            letterUsed[letter - 'A'] = 1;
+            k++;
+        }
+    }
+
+    // Insert remaining letters of the alphabet
+    for (char letter = 'A'; letter <= 'Z'; letter++) {
+        if (letter == 'J') continue; // Skip 'J'
+        if (!letterUsed[letter - 'A']) {
+            keyMatrix[k / SIZE][k % SIZE] = letter;
+            letterUsed[letter - 'A'] = 1;
+            k++;
+        }
+    }
+}
+
+// Helper function to find the position of a character in the matrix
+void findPosition(char letter, int* row, int* col) {
+    if (letter == 'J') letter = 'I'; // Treat 'I' and 'J' as the same
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyMatrix[i][j] == letter) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+// Function to prepare the plaintext by pairing letters and handling duplicates
+void prepareText(char* plaintext, char* preparedText) {
+    int len = strlen(plaintext);
+    int j = 0;
+
+    for (int i = 0; i < len; i++) {
+        if (isalpha(plaintext[i])) {
+            char letter = toupper(plaintext[i]);
+            preparedText[j++] = letter;
+
+            // Insert 'X' if two consecutive letters are the same
+            if (j > 1 && preparedText[j - 1] == preparedText[j - 2]) {
+                preparedText[j - 1] = 'X';
+                preparedText[j++] = letter;
+            }
+        }
+    }
+    if (j % 2 != 0) {
+        preparedText[j++] = 'X'; // Append 'X' if odd length
+    }
+    preparedText[j] = '\0';
+}
+
+// Encrypts a pair of characters using Playfair rules
+void encryptPair(char a, char b, char* encryptedPair) {
+    int row1, col1, row2, col2;
+    findPosition(a, &row1, &col1);
+    findPosition(b, &row2, &col2);
+
+    if (row1 == row2) { // Same row
+        encryptedPair[0] = keyMatrix[row1][(col1 + 1) % SIZE];
+        encryptedPair[1] = keyMatrix[row2][(col2 + 1) % SIZE];
+    } else if (col1 == col2) { // Same column
+        encryptedPair[0] = keyMatrix[(row1 + 1) % SIZE][col1];
+        encryptedPair[1] = keyMatrix[(row2 + 1) % SIZE][col2];
+    } else { // Rectangle
+        encryptedPair[0] = keyMatrix[row1][col2];
+        encryptedPair[1] = keyMatrix[row2][col1];
+    }
+}
+
+// Encrypts the entire plaintext message
+void encryptMessage(char* plaintext, char* ciphertext, char* keyword) {
+    createKeyMatrix(keyword);
+
+    char preparedText[100] = {0};
+    prepareText(plaintext, preparedText);
+
+    int len = strlen(preparedText);
+    for (int i = 0; i < len; i += 2) {
+        char encryptedPair[2];
+        encryptPair(preparedText[i], preparedText[i + 1], encryptedPair);
+        ciphertext[i] = encryptedPair[0];
+        ciphertext[i + 1] = encryptedPair[1];
+    }
+    ciphertext[len] = '\0';
+}
+
+int main() {
+    char keyword[100];
+    char plaintext[100];
+    char ciphertext[100];
+
+    printf("Enter a keyword for the Playfair cipher: ");
+    fgets(keyword, sizeof(keyword), stdin);
+    keyword[strcspn(keyword, "\n")] = '\0'; // Remove newline character
+
+    printf("Enter the plaintext message: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove newline character
+
+    // Encrypt the plaintext message
+    encryptMessage(plaintext, ciphertext, keyword);
+
+    printf("Encrypted Message: %s\n", ciphertext);
+
+    return 0;
+}
