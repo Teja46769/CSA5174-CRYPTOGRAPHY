@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+// Define the plaintext and ciphertext alphabets
+char plaintextAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+char ciphertextAlphabet[] = "QWERTYUIOPASDFGHJKLZXCVBNM";  // Example key
+
+// Function to encrypt a message using the monoalphabetic substitution cipher
+void encrypt(char* plaintext, char* ciphertext) {
+    int len = strlen(plaintext);
+    for (int i = 0; i < len; i++) {
+        char letter = toupper(plaintext[i]);
+
+        // Find the corresponding character in the ciphertext alphabet
+        if (isalpha(letter)) {
+            int index = letter - 'A';
+            ciphertext[i] = ciphertextAlphabet[index];
+        } else {
+            // Preserve non-alphabet characters as they are
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[len] = '\0'; // Null-terminate the ciphertext string
+}
+
+// Function to decrypt a message using the monoalphabetic substitution cipher
+void decrypt(char* ciphertext, char* decryptedText) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        char letter = toupper(ciphertext[i]);
+
+        // Find the index of the letter in the ciphertext alphabet
+        if (isalpha(letter)) {
+            char* ptr = strchr(ciphertextAlphabet, letter);
+            int index = ptr - ciphertextAlphabet;  // Position in ciphertext alphabet
+            decryptedText[i] = plaintextAlphabet[index];
+        } else {
+            // Preserve non-alphabet characters as they are
+            decryptedText[i] = ciphertext[i];
+        }
+    }
+    decryptedText[len] = '\0'; // Null-terminate the decrypted text
+}
+
+int main() {
+    char plaintext[100];
+    char encryptedText[100];
+    char decryptedText[100];
+
+    printf("Enter a message to encrypt: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove newline character if present
+
+    // Encrypt the plaintext
+    encrypt(plaintext, encryptedText);
+    printf("Encrypted Message: %s\n", encryptedText);
+
+    // Decrypt the ciphertext
+    decrypt(encryptedText, decryptedText);
+    printf("Decrypted Message: %s\n", decryptedText);
+
+    return 0;
+}
