@@ -1,0 +1,56 @@
+#include <stdio.h>
+
+int modInverse(int a, int m) {
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1;
+}
+
+void decryptAffine(char* ciphertext, int a, int b, char* decryptedText) {
+    int a_inv = modInverse(a, 26);
+    if (a_inv == -1) {
+        printf("Error: No modular inverse for 'a'. Decryption not possible.\n");
+        return;
+    }
+
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            decryptedText[i] = (a_inv * ((ciphertext[i] - 'A' - b + 26) % 26)) % 26 + 'A';
+        } else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            decryptedText[i] = (a_inv * ((ciphertext[i] - 'a' - b + 26) % 26)) % 26 + 'a';
+        } else {
+            decryptedText[i] = ciphertext[i];
+        }
+    }
+}
+
+int main() {
+    int p1 = 4, p2 = 19;   // Plaintext letters 'E' and 'T'
+    int c1 = 1, c2 = 20;   // Ciphertext letters 'B' and 'U'
+    int a, b;
+
+    // Solve for a using the equations:
+    int a_numerator = (c2 - c1 + 26) % 26;         // (C2 - C1) % 26
+    int a_denominator = (p2 - p1 + 26) % 26;       // (P2 - P1) % 26
+    int a_inv = modInverse(a_denominator, 26);
+    if (a_inv == -1) {
+        printf("No solution for 'a'.\n");
+        return 1;
+    }
+    a = (a_numerator * a_inv) % 26;
+    b = (c1 - a * p1 + 26) % 26;
+
+    printf("Calculated values: a = %d, b = %d\n", a, b);
+
+    char ciphertext[100], decryptedText[100];
+    printf("Enter the ciphertext: ");
+    scanf("%s", ciphertext);
+
+    decryptAffine(ciphertext, a, b, decryptedText);
+    printf("Decrypted text: %s\n", decryptedText);
+
+    return 0;
+}
