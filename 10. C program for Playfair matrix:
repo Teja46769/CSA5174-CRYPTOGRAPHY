@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+// Define the Playfair matrix
+char keyMatrix[SIZE][SIZE] = {
+    {'M', 'F', 'H', 'I', 'K'},
+    {'U', 'N', 'O', 'P', 'Q'},
+    {'Z', 'V', 'W', 'X', 'Y'},
+    {'E', 'L', 'A', 'R', 'G'},
+    {'D', 'S', 'T', 'B', 'C'}
+};
+
+// Helper function to find the position of a character in the matrix
+void findPosition(char letter, int *row, int *col) {
+    if (letter == 'J') letter = 'I'; // Treat 'I' and 'J' as the same
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyMatrix[i][j] == letter) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+// Encrypt a pair of characters using the Playfair cipher
+void encryptPair(char a, char b, char* encryptedPair) {
+    int row1, col1, row2, col2;
+    findPosition(a, &row1, &col1);
+    findPosition(b, &row2, &col2);
+
+    if (row1 == row2) { // Same row
+        encryptedPair[0] = keyMatrix[row1][(col1 + 1) % SIZE];
+        encryptedPair[1] = keyMatrix[row2][(col2 + 1) % SIZE];
+    } else if (col1 == col2) { // Same column
+        encryptedPair[0] = keyMatrix[(row1 + 1) % SIZE][col1];
+        encryptedPair[1] = keyMatrix[(row2 + 1) % SIZE][col2];
+    } else { // Rectangle
+        encryptedPair[0] = keyMatrix[row1][col2];
+        encryptedPair[1] = keyMatrix[row2][col1];
+    }
+}
+
+// Prepare the plaintext for encryption by forming pairs and handling repeated letters
+void prepareText(char* plaintext, char* preparedText) {
+    int len = strlen(plaintext);
+    int j = 0;
+
+    for (int i = 0; i < len; i++) {
+        if (isalpha(plaintext[i])) {
+            char letter = toupper(plaintext[i]);
+            preparedText[j++] = letter;
+            
+            // Insert 'X' if two consecutive letters are the same
+            if (j > 1 && preparedText[j - 1] == preparedText[j - 2]) {
+                preparedText[j - 1] = 'X';
+                preparedText[j++] = letter;
+            }
+        }
+    }
+    if (j % 2 != 0) {
+        preparedText[j++] = 'X'; // Append 'X' if odd length
+    }
+    preparedText[j] = '\0';
+}
+
+// Encrypt the entire message
+void encryptMessage(char* plaintext, char* ciphertext) {
+    char preparedText[100] = {0};
+    prepareText(plaintext, preparedText);
+
+    int len = strlen(preparedText);
+    for (int i = 0; i < len; i += 2) {
+        char encryptedPair[2];
+        encryptPair(preparedText[i], preparedText[i + 1], encryptedPair);
+        ciphertext[i] = encryptedPair[0];
+        ciphertext[i + 1] = encryptedPair[1];
+    }
+    ciphertext[len] = '\0';
+}
+
+int main() {
+    char plaintext[] = "Must see you over Cadogan West. Coming at once";
+    char ciphertext[100] = {0};
+
+    encryptMessage(plaintext, ciphertext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    return 0;
+}
