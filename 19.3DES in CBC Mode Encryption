@@ -1,0 +1,14 @@
+#include <stdio.h>
+#include <string.h>
+
+void encrypt3DESCBC(const char *plaintext, char *ciphertext) {
+    // Simplified; actual 3DES requires the DES algorithm and key management.
+}
+
+int main() {
+    const char *plaintext = "plaintextdata";
+    char ciphertext[50];
+    encrypt3DESCBC(plaintext, ciphertext);
+    printf("Ciphertext: %s\n", ciphertext);
+    return 0;
+}
