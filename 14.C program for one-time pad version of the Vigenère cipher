@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MOD 26
+
+void encryptVigenereOTP(const char *plaintext, int *key, char *ciphertext) {
+    int len = strlen(plaintext);
+    for (int i = 0; i < len; i++) {
+        if (plaintext[i] >= 'a' && plaintext[i] <= 'z') {
+            ciphertext[i] = ((plaintext[i] - 'a' + key[i]) % MOD) + 'a';
+        }
+    }
+    ciphertext[len] = '\0';
+}
+
+void decryptVigenereOTP(const char *ciphertext, int *key, char *plaintext) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            plaintext[i] = ((ciphertext[i] - 'a' - key[i] + MOD) % MOD) + 'a';
+        }
+    }
+    plaintext[len] = '\0';
+}
+
+int main() {
+    const char *plaintext = "sendmoremoney";
+    int key[] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9};
+    char ciphertext[50], decryptedText[50];
+
+    encryptVigenereOTP(plaintext, key, ciphertext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    decryptVigenereOTP(ciphertext, key, decryptedText);
+    printf("Decrypted Text: %s\n", decryptedText);
+
+    return 0;
+}
