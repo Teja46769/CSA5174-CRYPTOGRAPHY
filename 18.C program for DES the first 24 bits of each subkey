@@ -1,0 +1,85 @@
+#include <stdio.h>
+#include <stdint.h>
+
+#define NUM_ROUNDS 16
+
+// Permuted Choice 1 (PC1) - 56-bit key from 64-bit initial key
+int PC1[] = {
+    57, 49, 41, 33, 25, 17, 9,
+    1,  58, 50, 42, 34, 26, 18,
+    10, 2,  59, 51, 43, 35, 27,
+    19, 11, 3,  60, 52, 44, 36,    // First 28 bits (C half)
+    63, 55, 47, 39, 31, 23, 15,
+    7,  62, 54, 46, 38, 30, 22,
+    14, 6,  61, 53, 45, 37, 29,
+    21, 13, 5,  28, 20, 12, 4      // Second 28 bits (D half)
+};
+
+// Permuted Choice 2 (PC2) - 48-bit key from 56-bit C and D halves
+int PC2_first24[] = {
+    14, 17, 11, 24, 1,  5,
+    3,  28, 15, 6,  21, 10,
+    23, 19, 12, 4,  26, 8,
+    16, 7,  27, 20, 13, 2
+};
+
+int PC2_second24[] = {
+    41, 52, 31, 37, 47, 55,
+    30, 40, 51, 45, 33, 48,
+    44, 49, 39, 56, 34, 53,
+    46, 42, 50, 36, 29, 32
+};
+
+// Left shift schedule for each round
+int SHIFTS[] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
+
+// Generate subkeys
+void generateSubkeys(uint64_t key, uint64_t subkeys[NUM_ROUNDS]) {
+    uint64_t permutedKey = 0;
+    
+    // Apply PC1 to key
+    for (int i = 0; i < 56; i++) {
+        permutedKey <<= 1;
+        permutedKey |= (key >> (64 - PC1[i])) & 1;
+    }
+
+    uint32_t C = (permutedKey >> 28) & 0x0FFFFFFF;
+    uint32_t D = permutedKey & 0x0FFFFFFF;
+
+    for (int round = 0; round < NUM_ROUNDS; round++) {
+        // Left shift C and D according to shift schedule
+        C = ((C << SHIFTS[round]) | (C >> (28 - SHIFTS[round]))) & 0x0FFFFFFF;
+        D = ((D << SHIFTS[round]) | (D >> (28 - SHIFTS[round]))) & 0x0FFFFFFF;
+
+        // Create subkey from first and second 24 bits from disjoint subsets
+        uint64_t subkey = 0;
+
+        // Get first 24 bits from C using PC2_first24
+        for (int i = 0; i < 24; i++) {
+            subkey <<= 1;
+            subkey |= (C >> (28 - PC2_first24[i])) & 1;
+        }
+
+        // Get second 24 bits from D using PC2_second24
+        for (int i = 0; i < 24; i++) {
+            subkey <<= 1;
+            subkey |= (D >> (28 - PC2_second24[i])) & 1;
+        }
+
+        subkeys[round] = subkey;
+    }
+}
+
+int main() {
+    uint64_t key = 0x133457799BBCDFF1; // Example 64-bit key
+    uint64_t subkeys[NUM_ROUNDS];
+
+    generateSubkeys(key, subkeys);
+
+    printf("Generated DES Subkeys:\n");
+    for (int i = 0; i < NUM_ROUNDS; i++) {
+        printf("K%02d: %012llX\n", i + 1, subkeys[i]);
+    }
+
+    return 0;
+}
