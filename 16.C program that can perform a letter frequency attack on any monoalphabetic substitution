@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX_TEXT_LENGTH 1000
+#define ALPHABET_SIZE 26
+#define TOP_N 10
+
+// Frequency order of English letters from most to least frequent
+const char english_freq[] = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
+
+// Structure to hold letter and frequency
+typedef struct {
+    char letter;
+    int frequency;
+} Frequency;
+
+// Function to compare frequencies for sorting
+int compareFrequency(const void *a, const void *b) {
+    return ((Frequency *)b)->frequency - ((Frequency *)a)->frequency;
+}
+
+// Function to perform letter frequency analysis on ciphertext
+void analyzeFrequency(const char *ciphertext, Frequency freq[ALPHABET_SIZE]) {
+    int count[ALPHABET_SIZE] = {0};
+    int length = strlen(ciphertext);
+
+    // Count frequency of each letter in ciphertext
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            count[ciphertext[i] - 'A']++;
+        } else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            count[ciphertext[i] - 'a']++;
+        }
+    }
+
+    // Populate freq array with letters and their counts
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        freq[i].letter = 'A' + i;
+        freq[i].frequency = count[i];
+    }
+
+    // Sort frequencies in descending order
+    qsort(freq, ALPHABET_SIZE, sizeof(Frequency), compareFrequency);
+}
+
+// Function to substitute letters in ciphertext based on a mapping
+void substitute(const char *ciphertext, const char *mapping, char *plaintext) {
+    int length = strlen(ciphertext);
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            plaintext[i] = mapping[ciphertext[i] - 'A'];
+        } else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            plaintext[i] = mapping[ciphertext[i] - 'a'] + 32; // Convert to lowercase
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[length] = '\0';
+}
+
+// Function to display the top N possible plaintexts based on letter frequency analysis
+void generateTopPlaintexts(const char *ciphertext, int top_n) {
+    Frequency freq[ALPHABET_SIZE];
+    char mapping[ALPHABET_SIZE];
+    char plaintext[MAX_TEXT_LENGTH];
+
+    // Analyze letter frequency in ciphertext
+    analyzeFrequency(ciphertext, freq);
+
+    printf("Top %d Possible Plaintexts:\n", top_n);
+
+    // Generate top plaintexts by mapping most frequent letters in ciphertext to English frequency order
+    for (int i = 0; i < top_n; i++) {
+        // Create a tentative mapping based on English letter frequency order
+        for (int j = 0; j < ALPHABET_SIZE; j++) {
+            if (j + i < ALPHABET_SIZE) {
+                mapping[freq[j].letter - 'A'] = english_freq[j + i];
+            } else {
+                mapping[freq[j].letter - 'A'] = english_freq[(j + i) % ALPHABET_SIZE];
+            }
+        }
+
+        // Substitute ciphertext with generated mapping to get possible plaintext
+        substitute(ciphertext, mapping, plaintext);
+        printf("Plaintext %d: %s\n", i + 1, plaintext);
+    }
+}
+
+int main() {
+    char ciphertext[MAX_TEXT_LENGTH];
+
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, MAX_TEXT_LENGTH, stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0'; // Remove newline
+
+    generateTopPlaintexts(ciphertext, TOP_N);
+
+    return 0;
+}
