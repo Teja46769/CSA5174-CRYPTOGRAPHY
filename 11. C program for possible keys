@@ -1,0 +1,6 @@
+#include <stdio.h>
+
+int main() {
+    printf("The Playfair cipher has approximately 2^83 possible keys.\n");
+    return 0;
+}
