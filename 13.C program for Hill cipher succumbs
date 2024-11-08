@@ -1,0 +1,70 @@
+#include <stdio.h>
+
+#define MOD 26
+
+// Function to calculate modular inverse of a number under modulo 26
+int modInverse(int a, int mod) {
+    for (int x = 1; x < mod; x++) {
+        if ((a * x) % mod == 1) {
+            return x;
+        }
+    }
+    return -1;  // Inverse doesn't exist
+}
+
+// Function to calculate determinant of a 2x2 matrix modulo 26
+int determinantMod26(int a, int b, int c, int d) {
+    int det = (a * d - b * c) % MOD;
+    if (det < 0) det += MOD;
+    return det;
+}
+
+// Function to find the key matrix using known plaintext-ciphertext pairs
+int findKeyMatrix(int P[2][2], int C[2][2], int K[2][2]) {
+    int det = determinantMod26(P[0][0], P[0][1], P[1][0], P[1][1]);
+    int invDet = modInverse(det, MOD);
+    
+    if (invDet == -1) {
+        printf("Inverse of the determinant does not exist, so key cannot be uniquely determined.\n");
+        return 0;
+    }
+
+    // Inverse of plaintext matrix P modulo 26
+    int invP[2][2];
+    invP[0][0] = (P[1][1] * invDet) % MOD;
+    invP[0][1] = (-P[0][1] * invDet + MOD) % MOD;
+    invP[1][0] = (-P[1][0] * invDet + MOD) % MOD;
+    invP[1][1] = (P[0][0] * invDet) % MOD;
+
+    // Calculate the key matrix K = C * P^(-1) mod 26
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            K[i][j] = 0;
+            for (int k = 0; k < 2; k++) {
+                K[i][j] += C[i][k] * invP[k][j];
+            }
+            K[i][j] %= MOD;
+        }
+    }
+
+    return 1;
+}
+
+// Main function
+int main() {
+    // Known plaintext-ciphertext pairs for a 2x2 Hill cipher
+    // "hi" -> "mw" and "by" -> "kt"
+    int P[2][2] = {{7, 8}, {1, 24}};  // Plaintext letters as numbers: h=7, i=8, b=1, y=24
+    int C[2][2] = {{12, 22}, {10, 19}};  // Ciphertext letters as numbers: m=12, w=22, k=10, t=19
+    int K[2][2];  // Key matrix to be determined
+
+    if (findKeyMatrix(P, C, K)) {
+        printf("Recovered Key Matrix:\n");
+        printf("%d %d\n", K[0][0], K[0][1]);
+        printf("%d %d\n", K[1][0], K[1][1]);
+    } else {
+        printf("Failed to recover the key matrix.\n");
+    }
+
+    return 0;
+}
