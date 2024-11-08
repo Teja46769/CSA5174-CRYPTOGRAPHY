@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <string.h>
+#define MOD 26
+
+void frequencyAttackAdditiveCipher(const char *ciphertext, int topN) {
+    for (int key = 0; key < MOD; key++) {
+        printf("Key %d: ", key);
+        for (int i = 0; i < strlen(ciphertext); i++) {
+            if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+                char decrypted = ((ciphertext[i] - 'a' - key + MOD) % MOD) + 'a';
+                printf("%c", decrypted);
+            }
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    const char *ciphertext = "cipheredtext";
+    int topN = 10;
+    frequencyAttackAdditiveCipher(ciphertext, topN);
+    return 0;
+}
